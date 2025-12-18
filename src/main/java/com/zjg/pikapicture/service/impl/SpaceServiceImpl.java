@@ -13,6 +13,7 @@ import com.zjg.pikapicture.model.dto.space.SpaceQueryRequest;
 import com.zjg.pikapicture.model.entity.Space;
 import com.zjg.pikapicture.model.entity.User;
 import com.zjg.pikapicture.model.enums.SpaceLevelEnum;
+import com.zjg.pikapicture.model.enums.SpaceTypeEnum;
 import com.zjg.pikapicture.model.vo.SpaceVO;
 import com.zjg.pikapicture.model.vo.UserVO;
 import com.zjg.pikapicture.service.SpaceService;
@@ -64,6 +65,11 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         if (ObjUtil.isEmpty(spaceLevel)) {
             space.setSpaceLevel(SpaceLevelEnum.COMMON.getValue());
         }
+        //补充：空间类型设置,默认应是私人空间
+        Integer spaceType = spaceAddRequest.getSpaceType();
+        if (ObjUtil.isEmpty(spaceType)) {
+            space.setSpaceType(SpaceTypeEnum.PERSONAL.getValue());
+        }
         fillSpaceBySpaceLevel(space);
         //检验参数
         validSpace(space, true);
@@ -73,8 +79,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         if (!userService.isAdmin(loginUser) && SpaceLevelEnum.COMMON.getValue() != spaceAddRequest.getSpaceLevel()) {
             throw new BusinessException(NO_AUTH_ERROR, "没有权限");
         }
-        //同一用户只能创建一个私有空间
-
+        //同一用户每种类型的空间只能各自创建一个
         String lock = String.valueOf(userId).intern();
 //        Object lock = lockMap.computeIfAbsent(userId, key -> new Object());
         synchronized (lock) {
@@ -82,6 +87,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                 //判断是否已有空间
                 boolean exists = this.lambdaQuery()
                         .eq(Space::getUserId, userId)
+                        //添加空间类型的查询条件
+                        .eq(Space::getSpaceType, spaceType)
                         .exists();
                 ThrowUtils.throwIf(exists, OPERATION_ERROR, "空间已存在");
                 boolean result = this.save(space);
@@ -102,7 +109,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         //获取全部查询属性
         Long id = spaceQueryRequest.getId();
         String spaceName = spaceQueryRequest.getSpaceName();
-        int spaceLevel = spaceQueryRequest.getSpaceLevel();
+        Integer spaceLevel = spaceQueryRequest.getSpaceLevel();
+        Integer spaceType = spaceQueryRequest.getSpaceType();
         Long userId = spaceQueryRequest.getUserId();
         String sortField = spaceQueryRequest.getSortField();
         String sortOrder = spaceQueryRequest.getSortOrder();
@@ -110,6 +118,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         queryWrapper.eq(ObjUtil.isNotEmpty(id), "id", id);
         queryWrapper.eq(ObjUtil.isNotEmpty(userId), "user_id", userId);
         queryWrapper.eq(ObjUtil.isNotEmpty(spaceLevel), "space_level", spaceLevel);
+        queryWrapper.eq(ObjUtil.isNotEmpty(spaceType), "space_type", spaceType);
         queryWrapper.like(StrUtil.isNotBlank(spaceName), "space_name", spaceName);
         queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
 
@@ -181,18 +190,24 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 //        1. 从对象中取值
         String spaceName = space.getSpaceName();
         Integer spaceLevel = space.getSpaceLevel();
+        Integer spaceType = space.getSpaceType();
         SpaceLevelEnum spaceLevelEnum = SpaceLevelEnum.getEnumByValue(spaceLevel);
+        SpaceTypeEnum spaceTypeEnum = SpaceTypeEnum.getEnumByValue(spaceType);
         //创建时校验
         if (add) {
             ThrowUtils.throwIf(StrUtil.isBlank(spaceName), PARAMS_ERROR, "空间名称不能为空");
             ThrowUtils.throwIf(spaceLevel == null, PARAMS_ERROR, "空间级别不能为空");
+            ThrowUtils.throwIf(spaceType == null, PARAMS_ERROR, "空间类型不能为空");
         }
 //        2. 修改数据时
         if (StrUtil.isNotBlank(spaceName) && spaceName.length() > 30) {
             throw new BusinessException(PARAMS_ERROR, "空间名称过长");
         }
         if (spaceLevel != null && spaceLevelEnum == null) {
-            throw new BusinessException(PARAMS_ERROR, "空间级别需要修改");
+            throw new BusinessException(PARAMS_ERROR, "空间级别不存在");
+        }
+        if (spaceType != null && spaceTypeEnum == null) {
+            throw new BusinessException(PARAMS_ERROR, "空间类型不存在");
         }
 
     }

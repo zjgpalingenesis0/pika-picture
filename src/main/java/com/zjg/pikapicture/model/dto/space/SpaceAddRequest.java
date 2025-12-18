@@ -21,4 +21,9 @@ public class SpaceAddRequest implements Serializable {
      * 空间级别
      */
     private int spaceLevel;
+
+    /**
+     * 空间类型：0为私有空间 1为团队空间
+     */
+    private Integer spaceType;
 }

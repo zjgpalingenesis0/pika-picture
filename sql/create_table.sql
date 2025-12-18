@@ -85,3 +85,9 @@ ALTER TABLE picture
 
 -- 创建索引
 CREATE INDEX idx_space_id ON picture (space_id);
+
+-- 添加空间类型字段
+ALTER TABLE space
+    ADD COLUMN space_type int default 0 not null comment '空间类型：0-私有 1-团队';
+
+CREATE INDEX idx_space_type ON space (space_type);
