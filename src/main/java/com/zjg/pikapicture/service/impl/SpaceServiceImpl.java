@@ -11,24 +11,25 @@ import com.zjg.pikapicture.exception.ThrowUtils;
 import com.zjg.pikapicture.model.dto.space.SpaceAddRequest;
 import com.zjg.pikapicture.model.dto.space.SpaceQueryRequest;
 import com.zjg.pikapicture.model.entity.Space;
+import com.zjg.pikapicture.model.entity.SpaceUser;
 import com.zjg.pikapicture.model.entity.User;
 import com.zjg.pikapicture.model.enums.SpaceLevelEnum;
+import com.zjg.pikapicture.model.enums.SpaceRoleEnum;
 import com.zjg.pikapicture.model.enums.SpaceTypeEnum;
 import com.zjg.pikapicture.model.vo.SpaceVO;
 import com.zjg.pikapicture.model.vo.UserVO;
 import com.zjg.pikapicture.service.SpaceService;
 import com.zjg.pikapicture.mapper.SpaceMapper;
+import com.zjg.pikapicture.service.SpaceUserService;
 import com.zjg.pikapicture.service.UserService;
 import jakarta.annotation.Resource;
+import org.springframework.context.annotation.Lazy;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -48,6 +49,10 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Resource
     private TransactionTemplate transactionTemplate;
+
+    @Resource
+    @Lazy
+    private SpaceUserService spaceUserService;
 
 //    Map<Long, Object> lockMap = new ConcurrentHashMap<>();
 
@@ -93,6 +98,19 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                 ThrowUtils.throwIf(exists, OPERATION_ERROR, "空间已存在");
                 boolean result = this.save(space);
                 ThrowUtils.throwIf(!result, OPERATION_ERROR, "创建空间失败");
+
+                //如果是团队空间，关联新增团队成员记录
+                if (SpaceTypeEnum.TEAM.getValue().equals(spaceType)) {
+                    SpaceUser spaceUser = new SpaceUser();
+                    spaceUser.setSpaceId(space.getId());
+                    spaceUser.setUserId(userId);
+                    spaceUser.setSpaceRole(SpaceRoleEnum.ADMIN.getValue());
+                    boolean result1 = spaceUserService.save(spaceUser);
+                    ThrowUtils.throwIf(!result1, OPERATION_ERROR, "空间对象创建失败");
+                }
+
+
+
                 return space.getId();
             });
             return Optional.ofNullable(newSpaceId).orElse(-1L);
