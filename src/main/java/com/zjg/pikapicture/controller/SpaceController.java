@@ -11,6 +11,7 @@ import com.zjg.pikapicture.common.DeleteRequest;
 import com.zjg.pikapicture.common.ResultUtils;
 import com.zjg.pikapicture.exception.ErrorCode;
 import com.zjg.pikapicture.exception.ThrowUtils;
+import com.zjg.pikapicture.manager.auth.SpaceUserAuthManager;
 import com.zjg.pikapicture.manager.cache_.CacheTemplate;
 import com.zjg.pikapicture.manager.cache_.CaffeineCache;
 import com.zjg.pikapicture.manager.cache_.MultiLevelCache;
@@ -29,6 +30,7 @@ import com.zjg.pikapicture.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,6 +52,8 @@ public class SpaceController {
 
     @Resource
     private SpaceService spaceService;
+    @Autowired
+    private SpaceUserAuthManager spaceUserAuthManager;
 
     @PostMapping("/add")
     public BaseResponse<Long> addSpace(SpaceAddRequest spaceAddRequest, HttpServletRequest request) {
@@ -137,6 +141,9 @@ public class SpaceController {
 //        - 封装处理：调用服务层将实体转换为封装对象（包含关联信息）
         SpaceVO spaceVO = SpaceService.getSpaceVO(space);
         ThrowUtils.throwIf(spaceVO == null, ErrorCode.OPERATION_ERROR);
+        User loginUser = userService.getCurrentUser(request);
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
+        spaceVO.setPermissionList(permissionList);
 //        - 返回结果：返回图片视图对象
         return ResultUtils.success(spaceVO);
     }

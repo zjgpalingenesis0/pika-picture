@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zjg.pikapicture.exception.BusinessException;
 import com.zjg.pikapicture.exception.ThrowUtils;
+import com.zjg.pikapicture.manager.auth.StpKit;
 import com.zjg.pikapicture.model.dto.user.UserQueryRequest;
 import com.zjg.pikapicture.model.entity.User;
 import com.zjg.pikapicture.model.vo.LoginUserVO;
@@ -79,9 +80,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         ThrowUtils.throwIf(loginUser == null, SYSTEM_ERROR, "用户不存在");
         //保存用户登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, loginUser);
+        /**
+         * 记录用户态到Sa-token，便于空间鉴权时使用，
+         * 保证该用户信息与SpringSession中的信息过期时间一致
+         */
+        StpKit.SPACE.login(loginUser.getId());
+        StpKit.SPACE.getSession().set(USER_LOGIN_STATE, loginUser);
 
-
-        return getLoginUserVO(loginUser);
+        return this.getLoginUserVO(loginUser);
     }
 
     @Override
