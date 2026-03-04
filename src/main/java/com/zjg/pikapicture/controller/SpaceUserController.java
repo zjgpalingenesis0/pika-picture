@@ -24,6 +24,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -50,7 +51,7 @@ public class SpaceUserController {
      */
     @PostMapping("/add")
     @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.SPACE_USER_MANAGE)
-    public BaseResponse<Long> addSpaceUser(SpaceUserAddRequest spaceUserAddRequest) {
+    public BaseResponse<Long> addSpaceUser(@RequestBody SpaceUserAddRequest spaceUserAddRequest) {
         ThrowUtils.throwIf(spaceUserAddRequest == null, ErrorCode.PARAMS_ERROR);
         Long result = spaceUserService.addSpaceUser(spaceUserAddRequest);
         ThrowUtils.throwIf(result == null, ErrorCode.OPERATION_ERROR, "创建失败");
