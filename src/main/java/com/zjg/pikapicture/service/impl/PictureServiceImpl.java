@@ -267,7 +267,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         queryWrapper.eq(ObjUtil.isNotEmpty(userId), "user_id", userId);
         //补充空间相关字段
         queryWrapper.eq(ObjUtil.isNotEmpty(spaceId), "space_id", spaceId);
-        queryWrapper.isNull(nullSpaceId, "space_id");
+        // 处理 nullSpaceId 参数：true-查询公共图库，false-查询私有空间，null-查询所有
+        if (Boolean.TRUE.equals(nullSpaceId)) {
+            queryWrapper.isNull(true, "space_id");
+        } else if (Boolean.FALSE.equals(nullSpaceId)) {
+            queryWrapper.isNotNull(true, "space_id");
+        }
         queryWrapper.eq(ObjUtil.isNotEmpty(picSize), "pic_size", picSize);
         queryWrapper.eq(ObjUtil.isNotEmpty(picWidth), "pic_width", picWidth);
         queryWrapper.eq(ObjUtil.isNotEmpty(picHeight), "pic_height", picHeight);
@@ -358,7 +363,11 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         String url = picture.getUrl();
         String introduction = picture.getIntroduction();
 //        2. 修改数据时，id不能为空，有参数则校验  PARAMS_ERROR
-        ThrowUtils.throwIf(ObjUtil.isNull(id), PARAMS_ERROR, "id为空");
+        // 注意：创建图片后第一次编辑信息时，id可能为空是允许的
+        // 只有在没有url的情况下才要求id不能为空（纯编辑场景）
+        if (StrUtil.isBlank(url)) {
+            ThrowUtils.throwIf(ObjUtil.isNull(id), PARAMS_ERROR, "id为空");
+        }
 //        3. 如果传递了url，才校验  PARAMS_ERROR
         if (StrUtil.isNotBlank(url)) {
             ThrowUtils.throwIf(url.length() > 1024, PARAMS_ERROR, "url过长");
@@ -582,7 +591,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
         //权限验证：校验操作权限（只有本人或管理员可编辑）
         ThrowUtils.throwIf(!oldPicture.getUserId().equals(loginUser.getId())
-                && userService.isAdmin(loginUser), ErrorCode.NO_AUTH_ERROR);
+                && !userService.isAdmin(loginUser), ErrorCode.NO_AUTH_ERROR);
         //补充审核信息
         this.fillReviewParams(picture, loginUser);
 

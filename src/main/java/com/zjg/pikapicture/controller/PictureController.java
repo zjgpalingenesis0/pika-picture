@@ -219,10 +219,19 @@ public class PictureController {
     }
 
     @PostMapping("list/page/vo")
-    public BaseResponse<Page<PictureVO>> getPictureVOList(PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
+    public BaseResponse<Page<PictureVO>> getPictureVOList(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
 //        - 参数提取：从查询请求中获取分页参数
         long current = pictureQueryRequest.getCurrent();
         long pageSize = pictureQueryRequest.getPageSize();
+
+        // 🔍 调试日志：记录分页参数
+        log.info("===== 分页查询开始 =====");
+        log.info("分页参数: current={}, pageSize={}", current, pageSize);
+        log.info("查询参数: searchText={}, category={}, tags={}, spaceId={}",
+            pictureQueryRequest.getSearchText(),
+            pictureQueryRequest.getCategory(),
+            pictureQueryRequest.getTags(),
+            pictureQueryRequest.getSpaceId());
 
 //        - 防爬虫限制：限制单次查询最大数量不超过20条
         ThrowUtils.throwIf(pageSize > 20, ErrorCode.PARAMS_ERROR);
@@ -236,6 +245,8 @@ public class PictureController {
                 pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
             }
             pictureQueryRequest.setNullSpaceId(true);
+            log.info("设置公共图库查询条件: nullSpaceId=true, reviewStatus={}",
+                pictureQueryRequest.getReviewStatus());
         } else {
             //私有空间,仅空间创建人可以访问
 //            Space space = spaceService.getById(spaceId);
@@ -250,7 +261,18 @@ public class PictureController {
         }
 //        - 分页查询：调用服务层进行分页查询，返回原始实体数据
         QueryWrapper<Picture> queryWrapper = pictureService.getQueryWrapper(pictureQueryRequest);
+        log.info("最终查询条件: {}", queryWrapper);
+
         Page<Picture> picturePage = pictureService.page(new Page<>(current, pageSize), queryWrapper);
+
+        // 🔍 调试日志：记录查询结果
+        log.info("查询结果: 总记录数={}, 当前页记录数={}, 总页数={}",
+            picturePage.getTotal(), picturePage.getRecords().size(), picturePage.getPages());
+        if (!picturePage.getRecords().isEmpty()) {
+            log.info("当前页前3条记录ID: {}",
+                picturePage.getRecords().stream().limit(3).map(Picture::getId).toList());
+        }
+
 //        - 数据封装：调用服务层将实体分页数据转换为视图对象分页数据（包含用户关联信息）
         Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage, request);
 //        - 返回结果：返回分页后的图片实体列表
@@ -298,7 +320,7 @@ public class PictureController {
 
     @PostMapping("/edit")
     @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_EDIT)
-    public BaseResponse<Boolean> editPicture(PictureEditRequest pictureEditRequest, HttpServletRequest request) {
+    public BaseResponse<Boolean> editPicture(@RequestBody PictureEditRequest pictureEditRequest, HttpServletRequest request) {
         //参数校验：检查编辑请求对象和ID是否有效
         ThrowUtils.throwIf(pictureEditRequest == null, ErrorCode.PARAMS_ERROR);
 

@@ -6,6 +6,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.servlet.JakartaServletUtil;
 import cn.hutool.extra.servlet.ServletUtil;
 import cn.hutool.http.ContentType;
 import cn.hutool.http.Header;
@@ -27,7 +28,8 @@ import com.zjg.pikapicture.service.SpaceUserService;
 import com.zjg.pikapicture.service.UserService;
 import jakarta.annotation.Resource;
 
-import javax.servlet.http.HttpServletRequest;
+
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
@@ -190,12 +192,12 @@ public class StpInterfaceImpl implements StpInterface {
         SpaceUserAuthContext authRequest;
         //兼容get，post操作
         if (ContentType.JSON.getValue().equals(contentType)) {
-            String body = ServletUtil.getBody(request);
+            String body = JakartaServletUtil.getBody(request);
 
             authRequest = JSONUtil.toBean(body, SpaceUserAuthContext.class);
         }
         else {
-            Map<String, String> paramMap = ServletUtil.getParamMap(request);
+            Map<String, String> paramMap = JakartaServletUtil.getParamMap(request);
 
             authRequest = BeanUtil.toBean(paramMap, SpaceUserAuthContext.class);
         }

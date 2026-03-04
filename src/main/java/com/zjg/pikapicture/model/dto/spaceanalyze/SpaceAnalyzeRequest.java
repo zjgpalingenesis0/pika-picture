@@ -22,11 +22,11 @@ public class SpaceAnalyzeRequest implements Serializable {
     /**
      * 是否全空间分析
      */
-    private boolean queryAll;
+    private Boolean queryAll;
 
     /**
      * 是否查询公共图库
      */
-    private boolean queryPublic;
+    private Boolean queryPublic;
 
 }

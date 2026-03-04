@@ -44,7 +44,7 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
     @Override
     public void checkSpaceAnalyzeAuth(SpaceAnalyzeRequest spaceAnalyzeRequest, User loginUser) {
         //全空间分析或者公共图库分析，仅管理员
-        if (spaceAnalyzeRequest.isQueryAll() || spaceAnalyzeRequest.isQueryPublic()) {
+        if (Boolean.TRUE.equals(spaceAnalyzeRequest.getQueryAll()) || Boolean.TRUE.equals(spaceAnalyzeRequest.getQueryPublic())) {
             ThrowUtils.throwIf(!userService.isAdmin(loginUser), ErrorCode.NO_AUTH_ERROR, "没有权限");
         }
 
@@ -62,11 +62,11 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
     @Override
     public void fillAnalyzeQueryWrapper(SpaceAnalyzeRequest spaceAnalyzeRequest, QueryWrapper<Picture> queryWrapper) {
         //管理员查询全空间
-        if (spaceAnalyzeRequest.isQueryAll()) {
+        if (Boolean.TRUE.equals(spaceAnalyzeRequest.getQueryAll())) {
             return;
         }
         //管理员查询公共图库
-        if (spaceAnalyzeRequest.isQueryPublic()) {
+        if (Boolean.TRUE.equals(spaceAnalyzeRequest.getQueryPublic())) {
             queryWrapper.isNull("space_id");
             return;
         }
@@ -84,12 +84,12 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
         ThrowUtils.throwIf(spaceUsageAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
         //查询全部或公共图库逻辑
-        if (spaceUsageAnalyzeRequest.isQueryAll() || spaceUsageAnalyzeRequest.isQueryPublic()) {
+        if (Boolean.TRUE.equals(spaceUsageAnalyzeRequest.getQueryAll()) || Boolean.TRUE.equals(spaceUsageAnalyzeRequest.getQueryPublic())) {
             ThrowUtils.throwIf(!userService.isAdmin(loginUser), ErrorCode.NO_AUTH_ERROR);
             //统计公共图库的资源使用
             QueryWrapper<Picture> queryWrapper = new QueryWrapper<>();
             queryWrapper.select("pic_size");
-            if (!spaceUsageAnalyzeRequest.isQueryAll()) {
+            if (!Boolean.TRUE.equals(spaceUsageAnalyzeRequest.getQueryAll())) {
                 queryWrapper.isNull("space_id");
             }
             List<Object> pictureObjList = pictureService.getBaseMapper().selectObjs(queryWrapper);
@@ -113,7 +113,12 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
         //查询指定空间
         else {
             Long spaceId = spaceUsageAnalyzeRequest.getSpaceId();
-            ThrowUtils.throwIf(spaceId == null || spaceId <= 0, ErrorCode.PARAMS_ERROR);
+            // 更明确的错误提示，帮助调试
+            if (spaceId == null || spaceId <= 0) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR,
+                    "查询指定空间时，必须提供有效的空间ID。请检查参数：queryAll=" + spaceUsageAnalyzeRequest.getQueryAll() +
+                    ", queryPublic=" + spaceUsageAnalyzeRequest.getQueryPublic() + ", spaceId=" + spaceId);
+            }
 
             //获取空间信息
             Space space = spaceService.getById(spaceId);

@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zjg.pikapicture.exception.BusinessException;
 import com.zjg.pikapicture.exception.ThrowUtils;
+import com.zjg.pikapicture.manager.sharding.DynamicShardingManager;
 import com.zjg.pikapicture.model.dto.space.SpaceAddRequest;
 import com.zjg.pikapicture.model.dto.space.SpaceQueryRequest;
 import com.zjg.pikapicture.model.entity.Space;
@@ -53,6 +54,10 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
     @Resource
     @Lazy
     private SpaceUserService spaceUserService;
+//    @Resource
+//    @Lazy
+//    private DynamicShardingManager dynamicShardingManager;
+
 
 //    Map<Long, Object> lockMap = new ConcurrentHashMap<>();
 
@@ -108,7 +113,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                     boolean result1 = spaceUserService.save(spaceUser);
                     ThrowUtils.throwIf(!result1, OPERATION_ERROR, "空间对象创建失败");
                 }
-
+                //创建分表
+//                dynamicShardingManager.createSpacePictureTable(space);
 
 
                 return space.getId();

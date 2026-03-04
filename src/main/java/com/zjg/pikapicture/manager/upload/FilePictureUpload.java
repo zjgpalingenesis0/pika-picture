@@ -39,7 +39,7 @@ public class FilePictureUpload extends PictureUploadTemplate {
         //        1. 获取 FileUtil.getSuffix
         String suffix = FileUtil.getSuffix(multipartFile.getOriginalFilename());
         //    2. 定义允许上传的文件后缀列表final  List<String>   ALLOW_FRMAT_LIST, 有jpeg，png，jpg，webp等等。
-        final List<String> ALLOW_FORMAT_LIST = Arrays.asList("jpeg", "jpg", "png", "webp");
+        final List<String> ALLOW_FORMAT_LIST = Arrays.asList("jpeg", "jpg", "png", "webp", "jfif");
         //        3. 判断如果列表不包含这个后缀，PARAMS_ERROR
         ThrowUtils.throwIf(!ALLOW_FORMAT_LIST.contains(suffix), ErrorCode.PARAMS_ERROR, "文件类型错误");
     }
