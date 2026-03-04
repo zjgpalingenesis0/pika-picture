@@ -56,7 +56,7 @@ public class SpaceController {
     private SpaceUserAuthManager spaceUserAuthManager;
 
     @PostMapping("/add")
-    public BaseResponse<Long> addSpace(SpaceAddRequest spaceAddRequest, HttpServletRequest request) {
+    public BaseResponse<Long> addSpace(@RequestBody SpaceAddRequest spaceAddRequest, HttpServletRequest request) {
         //校验
         ThrowUtils.throwIf(spaceAddRequest == null, ErrorCode.PARAMS_ERROR);
         String spaceName = spaceAddRequest.getSpaceName();
@@ -74,7 +74,7 @@ public class SpaceController {
     }
 
     @PostMapping("/delete")
-    public BaseResponse<Boolean> deleteSpace(DeleteRequest deleteRequest, HttpServletRequest request) {
+    public BaseResponse<Boolean> deleteSpace(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
 //        - 参数校验：检查删除请求对象和ID是否有效
         ThrowUtils.throwIf(deleteRequest == null, ErrorCode.PARAMS_ERROR);
         //空间id
@@ -97,7 +97,7 @@ public class SpaceController {
 
     @PostMapping("/update")
     @AuthCheck(mustRole = ADMIN_ROLE)
-    public BaseResponse<Boolean> updateSpace(SpaceUpdateRequest spaceUpdateRequest, HttpServletRequest request) {
+    public BaseResponse<Boolean> updateSpace(@RequestBody SpaceUpdateRequest spaceUpdateRequest, HttpServletRequest request) {
 //        - 参数校验：检查更新请求对象和ID是否有效
         ThrowUtils.throwIf(spaceUpdateRequest == null, ErrorCode.PARAMS_ERROR);
         Long id = spaceUpdateRequest.getId();
@@ -150,7 +150,7 @@ public class SpaceController {
 
     @PostMapping("list/page")
     @AuthCheck(mustRole = ADMIN_ROLE)
-    public BaseResponse<Page<Space>> getSpaceList(SpaceQueryRequest spaceQueryRequest) {
+    public BaseResponse<Page<Space>> getSpaceList(@RequestBody SpaceQueryRequest spaceQueryRequest) {
 //        - 参数提取：从查询请求中获取分页参数
         long current = spaceQueryRequest.getCurrent();
         long pageSize = spaceQueryRequest.getPageSize();
@@ -162,7 +162,7 @@ public class SpaceController {
     }
 
     @PostMapping("list/page/vo")
-    public BaseResponse<Page<SpaceVO>> getSpaceVOList(SpaceQueryRequest spaceQueryRequest) {
+    public BaseResponse<Page<SpaceVO>> getSpaceVOList(@RequestBody SpaceQueryRequest spaceQueryRequest) {
 //        - 参数提取：从查询请求中获取分页参数
         long current = spaceQueryRequest.getCurrent();
         long pageSize = spaceQueryRequest.getPageSize();
@@ -181,7 +181,7 @@ public class SpaceController {
 
 
     @PostMapping("/edit")
-    public BaseResponse<Boolean> editSpace(SpaceEditRequest spaceEditRequest, HttpServletRequest request) {
+    public BaseResponse<Boolean> editSpace(@RequestBody SpaceEditRequest spaceEditRequest, HttpServletRequest request) {
 //        - 参数校验：检查编辑请求对象和ID是否有效
         ThrowUtils.throwIf(spaceEditRequest == null, ErrorCode.PARAMS_ERROR);
         Long id = spaceEditRequest.getId();

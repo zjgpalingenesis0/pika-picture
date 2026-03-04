@@ -12,10 +12,12 @@ import com.zjg.pikapicture.manager.auth.model.SpaceUserPermissionConstant;
 import com.zjg.pikapicture.model.dto.spaceuser.SpaceUserAddRequest;
 import com.zjg.pikapicture.model.dto.spaceuser.SpaceUserEditRequest;
 import com.zjg.pikapicture.model.dto.spaceuser.SpaceUserQueryRequest;
+import com.zjg.pikapicture.model.entity.Space;
 import com.zjg.pikapicture.model.entity.SpaceUser;
 import com.zjg.pikapicture.model.entity.User;
 import com.zjg.pikapicture.model.enums.SpaceRoleEnum;
 import com.zjg.pikapicture.model.vo.SpaceUserVO;
+import com.zjg.pikapicture.service.SpaceService;
 import com.zjg.pikapicture.service.SpaceUserService;
 import com.zjg.pikapicture.service.UserService;
 import jakarta.annotation.Resource;
@@ -36,6 +38,9 @@ public class SpaceUserController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private SpaceService spaceService;
 
     /**
      * 添加成员到空间
@@ -137,7 +142,21 @@ public class SpaceUserController {
         spaceUserQueryRequest.setUserId(userId);
         QueryWrapper<SpaceUser> queryWrapper = spaceUserService.getQueryWrapper(spaceUserQueryRequest);
         List<SpaceUser> spaceUserList = spaceUserService.list(queryWrapper);
-        List<SpaceUserVO> spaceUserVOList = spaceUserService.getSpaceUserVOList(spaceUserList);
+
+        // 过滤出团队空间（spaceType = 1）
+        List<SpaceUser> teamSpaceUsers = spaceUserList.stream()
+                .filter(spaceUser -> {
+                    Space space = spaceService.getById(spaceUser.getSpaceId());
+                    return space != null && space.getSpaceType() == 1; // 只要团队空间
+                })
+                .collect(java.util.stream.Collectors.toList());
+
+        // 如果没有团队空间，直接返回空列表
+        if (teamSpaceUsers.isEmpty()) {
+            return ResultUtils.success(new java.util.ArrayList<>());
+        }
+
+        List<SpaceUserVO> spaceUserVOList = spaceUserService.getSpaceUserVOList(teamSpaceUsers);
 
         return ResultUtils.success(spaceUserVOList);
     }
